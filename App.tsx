@@ -5,7 +5,7 @@ import { CURRICULUM } from './constants';
 import { generateLessonContent } from './services/geminiService';
 import Fretboard from './components/Fretboard';
 import Ladder from './components/Ladder';
-import { Music, GraduationCap, Trophy, ChevronRight, Settings2, Loader2, Sparkles, Layout, X, Plus, Minus, BookOpen, Menu, Volume2, VolumeX } from 'lucide-react';
+import { Music, GraduationCap, Trophy, ChevronRight, Settings2, Loader2, Sparkles, Layout, X, Plus, Minus, BookOpen, Menu, Volume2, VolumeX, AlertTriangle } from 'lucide-react';
 
 const THEMES = {
   [Difficulty.BEGINNER]: {
@@ -69,6 +69,7 @@ const App: React.FC = () => {
     localStorage.setItem('guitar_master_settings', JSON.stringify(settings));
   }, [settings]);
 
+  // Fix: Removed hasApiKey check as per instructions to assume the key is present.
   const loadLesson = useCallback(async (id: string, diff: Difficulty) => {
     setLoading(true);
     setError(null);
@@ -80,7 +81,7 @@ const App: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      setError("Falha ao carregar aula. Verifique sua conexão.");
+      setError("Falha ao carregar aula. Verifique sua conexão ou cota da API.");
     } finally {
       setLoading(false);
       setIsSidebarOpen(false);
@@ -108,7 +109,6 @@ const App: React.FC = () => {
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         
-        // Woodblock-style click sound
         osc.type = 'sine';
         osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
         
@@ -163,13 +163,6 @@ const App: React.FC = () => {
       ...prev,
       overriddenBpms: { ...prev.overriddenBpms, [lesson.id]: Math.max(40, Math.min(240, val)) }
     }));
-  };
-
-  const resetLessonBpm = () => {
-    if (!lesson) return;
-    const newOverrides = { ...settings.overriddenBpms };
-    delete newOverrides[lesson.id];
-    setSettings(prev => ({ ...prev, overriddenBpms: newOverrides }));
   };
 
   return (
@@ -228,7 +221,6 @@ const App: React.FC = () => {
                 />
               </div>
 
-              {/* Incremental Metronome Sound Toggle */}
               <div className="p-5 rounded-2xl border border-slate-800 bg-slate-950/50 flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-bold text-slate-100">Som do Metrônomo</h3>
@@ -281,7 +273,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Sidebar - Mobile Responsive */}
+      {/* Sidebar */}
       <aside className={`
         fixed inset-0 z-30 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:inset-auto md:w-80 bg-slate-900 border-r border-slate-800 flex flex-col h-full
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
@@ -321,7 +313,6 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Sidebar Header */}
         <div className="md:hidden p-6 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
            <span className="font-black text-lg">Menu de Aulas</span>
            <button onClick={() => setIsSidebarOpen(false)} className="p-2 text-slate-400">
@@ -377,7 +368,7 @@ const App: React.FC = () => {
         ) : error ? (
           <div className="flex-grow flex flex-col items-center justify-center p-8 text-center">
             <div className="p-4 bg-red-950/40 text-red-500 rounded-3xl mb-6 border border-red-900/50">
-              <Settings2 className="w-8 h-8" />
+              <AlertTriangle className="w-8 h-8" />
             </div>
             <h2 className="text-xl font-black text-slate-100">Algo falhou...</h2>
             <p className="text-slate-500 mt-2 mb-8 text-sm">{error}</p>
@@ -390,7 +381,7 @@ const App: React.FC = () => {
           </div>
         ) : lesson ? (
           <div className="p-5 md:p-10 max-w-4xl mx-auto w-full animate-in slide-in-from-bottom-6 duration-500 pb-24">
-            {/* Header */}
+            {/* Lesson Header */}
             <header className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
               <div>
                 <div className={`flex items-center gap-2 font-black text-[9px] uppercase tracking-[0.2em] mb-3 ${theme.text}`}>
@@ -414,7 +405,7 @@ const App: React.FC = () => {
               </button>
             </header>
 
-            {/* Theory Section */}
+            {/* Theory */}
             <section className="bg-slate-900 p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-800 mb-8 relative overflow-hidden group">
               <div className={`absolute top-0 left-0 w-1 h-full ${theme.button.split(' ')[0]}`}></div>
               <h2 className="text-lg font-black text-slate-100 mb-4 flex items-center gap-3">
@@ -426,7 +417,7 @@ const App: React.FC = () => {
               </div>
             </section>
 
-            {/* Visual Section - Fretboard */}
+            {/* Fretboard */}
             <section className="bg-slate-900 p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-800 mb-8 overflow-hidden">
               <h2 className="text-lg font-black text-slate-100 mb-4 flex items-center gap-3">
                 <Layout className={`w-5 h-5 ${theme.text}`} />
@@ -445,13 +436,11 @@ const App: React.FC = () => {
                   <Music className={`w-5 h-5 ${theme.text}`} />
                   3. Tablatura
                 </h2>
-                
                 <div className="flex-grow">
                    <div className="bg-black/80 p-5 rounded-2xl font-mono text-[10px] md:text-sm overflow-x-auto whitespace-pre border border-slate-800 mb-6 text-slate-200 shadow-inner custom-tab">
                     {lesson.scaleTab}
                   </div>
                 </div>
-
                 <div className="flex items-center gap-3 text-[10px] font-bold text-slate-500 mt-auto">
                   <Sparkles className={`w-4 h-4 ${theme.text}`} />
                   <span>Meta: <strong className={theme.text}>{currentBpm} BPM</strong></span>
@@ -478,7 +467,7 @@ const App: React.FC = () => {
               </section>
             </div>
 
-            {/* Daily Challenge */}
+            {/* Challenge */}
             <section className={`bg-gradient-to-br ${theme.gradient} p-8 md:p-12 rounded-[3rem] text-slate-950 shadow-2xl mb-12 relative overflow-hidden transition-all duration-700`}>
                <Trophy className="absolute -right-10 -bottom-10 w-48 md:w-64 h-48 md:h-64 text-black/10 rotate-12" />
                <div className="relative z-10">
@@ -529,7 +518,6 @@ const App: React.FC = () => {
             font-size: 10px;
           }
         }
-        /* Mobile slider touch target improvement */
         input[type=range]::-webkit-slider-thumb {
           width: 24px;
           height: 24px;

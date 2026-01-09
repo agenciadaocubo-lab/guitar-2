@@ -33,7 +33,8 @@ export async function generateLessonContent(
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      // Fix: Use gemini-3-pro-preview for complex text tasks like music theory and tab generation.
+      model: "gemini-3-pro-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -76,7 +77,9 @@ export async function generateLessonContent(
       }
     });
 
-    const rawData = JSON.parse(response.text);
+    // Fix: Use response.text.trim() for safer JSON parsing as per guidelines.
+    const text = response.text.trim();
+    const rawData = JSON.parse(text);
     return { ...rawData, id: lessonId };
   } catch (error: any) {
     // Se for erro de quota (429) e ainda houver tentativas, espera e tenta de novo
